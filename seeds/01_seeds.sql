@@ -87,7 +87,7 @@ VALUES (
     'V2X8J4'
 );
 
-INSERT INTO reservation 
+INSERT INTO reservations
 (
   start_date,
   end_date,
