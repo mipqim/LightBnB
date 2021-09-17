@@ -137,10 +137,12 @@ const getAllProperties = function (options, limit = 10) {
     queryString += ` HAVING avg(property_reviews.rating) >= $${queryParams.length} `;
   }
 
+  if(options.maximum_price_per_night || options.minimum_price_per_night) {
+    queryString += ` ORDER BY cost_per_night `;
+  }
+
   queryParams.push(limit);
-  queryString += `
-  ORDER BY cost_per_night 
-  LIMIT $${queryParams.length};
+  queryString += ` LIMIT $${queryParams.length};
   `;
 
 return pool.query(queryString, queryParams).then((res) => res.rows).catch((err) => console.log(err.message));;
@@ -156,9 +158,47 @@ exports.getAllProperties = getAllProperties;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  const query = 
+    `INSERT INTO properties
+      (title, 
+       description, 
+       owner_id, 
+       cover_photo_url, 
+       thumbnail_photo_url, 
+       cost_per_night, 
+       parking_spaces, 
+       number_of_bathrooms, 
+       number_of_bedrooms, 
+       active, 
+       province, 
+       city, 
+       country, 
+       street, 
+       post_code
+       )
+    VALUES 
+      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+    RETURNING *;`;
+
+  const params = [property.title, 
+                  property.description, 
+                  property.owner_id, 
+                  property.cover_photo_url, 
+                  property.thumbnail_photo_url, 
+                  property.cost_per_night, 
+                  property.parking_spaces, 
+                  property.number_of_bathrooms, 
+                  property.number_of_bedrooms, 
+                  true, 
+                  property.province, 
+                  property.city, 
+                  property.country, 
+                  property.street, 
+                  property.post_code];
+
+  return pool
+    .query(query, params)
+    .then(result => result.rows[0] )
+    .catch((err) => console.log(err.message));
 }
 exports.addProperty = addProperty;
